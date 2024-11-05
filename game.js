@@ -1,34 +1,53 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: 0,
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
 
-// Variabel untuk menara dan musuh
-const towers = [];
-const enemies = [];
+const game = new Phaser.Game(config);
 
-// Fungsi untuk menggambar menara
-function drawTower(x, y) {
-    ctx.fillStyle = 'green';
-    ctx.fillRect(x, y, 50, 50);
+let towers = [];
+let enemies = [];
+let enemySpawnTime = 2000; // Waktu spwan musuh dalam milidetik
+let enemySpeed = 100; // Kecepatan musuh
+
+function preload() {
+    // Load assets di sini (sprite, gambar, dll.)
 }
 
-// Fungsi untuk menggambar musuh
-function drawEnemy(x, y) {
-    ctx.fillStyle = 'red';
-    ctx.beginPath();
-    ctx.arc(x, y, 20, 0, Math.PI * 2);
-    ctx.fill();
+function create() {
+    this.input.on('pointerdown', placeTower, this); // Tempatkan menara saat klik
+    this.time.addEvent({ delay: enemySpawnTime, callback: addEnemy, callbackScope: this, loop: true }); // Tambahkan musuh secara berkala
 }
 
-// Loop game
-function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Gambar menara dan musuh
-    towers.forEach(tower => drawTower(tower.x, tower.y));
-    enemies.forEach(enemy => drawEnemy(enemy.x, enemy.y));
-    requestAnimationFrame(gameLoop);
+function update() {
+    // Update logika game, gerakan musuh, menara, dll.
+    enemies.forEach(enemy => {
+        enemy.y += enemySpeed * (1 / 60); // Pergerakan musuh
+        if (enemy.y > this.cameras.main.height) {
+            enemy.destroy(); // Hapus musuh jika keluar dari layar
+        }
+    });
 }
 
-// Tambah menara dan musuh untuk percobaan
-towers.push({ x: 100, y: 100 });
-enemies.push({ x: 200, y: 50 });
-gameLoop();
+function placeTower(pointer) {
+    const tower = this.add.rectangle(pointer.x, pointer.y, 50, 50, 0x00ff00); // Menggambar menara
+    towers.push(tower);
+}
+
+function addEnemy() {
+    const enemy = this.add.circle(Math.random() * this.cameras.main.width, 0, 15, 0xff0000); // Menggambar musuh
+    enemies.push(enemy);
+}
